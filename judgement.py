@@ -2,26 +2,29 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 
+
 def load_student_lists():
     filename = filedialog.askopenfilename(title="Select File", filetypes=[("Text Files", "*.txt")])
     student_lists = {}
+    class_names = []
     if filename:
         with open(filename, 'r') as file:
             current_class = None
-            current_students = []
             for line in file:
                 line = line.strip()
-                if line.startswith("[CLASS]"):
-                    current_class = line.split()[1]
-                elif line.startswith("[ENDLCLASS]"):
-                    if current_class:
-                        student_lists[current_class] = current_students
-                        current_students = []
-                else:
-                    current_students.append(line)
+                if line and not line.isspace():  # Skip empty lines
+                    if line.startswith("[class]"):
+                        current_class = line.split()[1]
+                        class_names.append(current_class)
+                        current_students = []  # Moved inside the if block
+                    elif line.startswith("[endclass]"):
+                        if current_class:
+                            student_lists[current_class] = current_students
+                    else:
+                        current_students.append(line)
             if current_class:
                 student_lists[current_class] = current_students
-    return student_lists
+    return class_names, student_lists
 
 def display_students(event):
     selected_class = class_dropdown.get()
@@ -35,12 +38,14 @@ def remove_students():
     for index in selected_indices[::-1]:
         student_listbox.delete(index)
 
+
 root = tk.Tk()
 root.title("Judgement Day")
-root.configure(background=	"#E3CF57")
+root.configure(background= "#E3CF57")
 root.geometry("1030x790+100+100")
 
-student_lists = {}
+
+class_names, student_lists = load_student_lists()
 
 class_dropdown_frame = ttk.Frame(root)
 class_dropdown_frame.grid(row=0, column=0, padx=5, pady=5)
@@ -48,7 +53,6 @@ class_dropdown_frame.grid(row=0, column=0, padx=5, pady=5)
 class_label = ttk.Label(class_dropdown_frame, text="Select Class:")
 class_label.grid(row=0, column=0, padx=5, pady=5)
 
-class_names = []
 class_dropdown = ttk.Combobox(class_dropdown_frame, values=class_names, state="readonly")
 class_dropdown.grid(row=0, column=1, padx=5, pady=5)
 class_dropdown.bind("<<ComboboxSelected>>", display_students)
